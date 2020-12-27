@@ -31,7 +31,7 @@ namespace Befunge_Interpreter
                 Debug.WriteLine("Char: " + currentChar);
                 if (_stringMode)
                     _theStack.Push(_theInstruction.CurrentChar);
-                if (Char.IsLetter(currentChar) && !new char[] { 'p', 'g', 'v' }.Contains(currentChar))
+                else if (Char.IsLetter(currentChar) && !new char[] { 'p', 'g', 'v' }.Contains(currentChar))
                     _theStack.Push(_theInstruction.CurrentChar);
                 if (Char.IsDigit(_theInstruction.CurrentChar))
                     _theStack.Push(_theInstruction.CurrentChar - 48);
@@ -39,81 +39,7 @@ namespace Befunge_Interpreter
                     SetDirection(_theInstruction.CurrentChar);
                 else if (_stringMode)
                     _theStack.Push(_theInstruction.CurrentChar);
-                else if (new char[] { '+', '-', '*', '/', '%' }.Contains(_theInstruction.CurrentChar))
-                {
-                }
-                else if (_theInstruction.CurrentChar == '`')
-                {
-                }
-                else if (_theInstruction.CurrentChar == '!')
-                {
-                }
-                else if (_theInstruction.CurrentChar == '?')
-                {
-                    var next = _random.Next(0, 3);
-                    var randomChar = movers[next];
-                    SetDirection(randomChar);
-                }
-                else if (_theInstruction.CurrentChar == '_')
-                {
-                    if (_theStack.Pop() == 0)
-                        SetDirection('>');
-                    else
-                        SetDirection('<');
-                }
-                else if (_theInstruction.CurrentChar == '|')
-                {
-                    if (_theStack.Pop() == 0)
-                        SetDirection('v');
-                    else
-                        SetDirection('^');
-                }
-                else if (_theInstruction.CurrentChar == '"')
-                {
-                    _stringMode = true;
-                    _theInstruction.Move(_currentDirection);
-                    do
-                    {
-                        Interpret(code);
-                    } while (_theInstruction.CurrentChar != '"');
-                    _stringMode = false;
-                }
-                else if (_theInstruction.CurrentChar == ':')
-                {
-                    if (_theStack.Count == 0)
-                        _theStack.Push(0);
-                    else
-                        _theStack.Push(_theStack.Peek());
-                }
-                else if (_theInstruction.CurrentChar == '\\')
-                {
-                    var b = _theStack.Pop();
-                    var a = _theStack.Pop();
-                    _theStack.Push(b);
-                    _theStack.Push(a);
-                }
-                else if (_theInstruction.CurrentChar == '$')
-                    _theStack.Pop();
-                else if (_theInstruction.CurrentChar == '.')
-                    _theOutput.Append(_theStack.Pop().ToString());
-                else if (_theInstruction.CurrentChar == ',')
-                    _theOutput.Append(((char)_theStack.Pop()).ToString());
-                else if (_theInstruction.CurrentChar == '#')
-                    _theInstruction.Move(_currentDirection);
-                else if (_theInstruction.CurrentChar == 'p')
-                {
-                    var y = _theStack.Pop();
-                    var x = _theStack.Pop();
-                    var v = _theStack.Pop();
-                    _theInstruction.SetCharAtPoint(new Point(x, y), (char)v);
-                }
-                else if (_theInstruction.CurrentChar == 'g')
-                {
-                    var y = _theStack.Pop();
-                    var x = _theStack.Pop();
-                    _theStack.Push((char)_theInstruction.GetCharAtPoint(new Point(x, y)));
-                }
-                else if (_theInstruction.CurrentChar == '@')
+                if (_theInstruction.CurrentChar == '@')
                     break;
 
                 switch (_theInstruction.CurrentChar)
@@ -135,7 +61,70 @@ namespace Befunge_Interpreter
                         b = _theStack.Pop();
                         _theStack.Push(b > a ? 1 : 0);
                         break;
-                    default:
+                    case '!':
+                        a = _theStack.Pop();
+                        _theStack.Push(a == 0 ? 1 : 0);
+                        break;
+                    case '?':
+                        var next = _random.Next(0, 3);
+                        var randomChar = movers[next];
+                        SetDirection(randomChar);
+                        break;
+                    case '_':
+                        if (_theStack.Pop() == 0)
+                            SetDirection('>');
+                        else
+                            SetDirection('<');
+                        break;
+                    case '|':
+                        if (_theStack.Pop() == 0)
+                            SetDirection('v');
+                        else
+                            SetDirection('^');
+                        break;
+                    case '"':
+                        _stringMode = true;
+                        _theInstruction.Move(_currentDirection);
+                        do
+                        {
+                            Interpret(code);
+                        } while (_theInstruction.CurrentChar != '"');
+                        _stringMode = false;
+                        break;
+                    case ':':
+                        if (_theStack.Count == 0)
+                            _theStack.Push(0);
+                        else
+                            _theStack.Push(_theStack.Peek());
+                        break;
+                    case '$':
+                        _theStack.Pop();
+                        break;
+                    case '\\':
+                        b = _theStack.Pop();
+                        a = _theStack.Pop();
+                        _theStack.Push(b);
+                        _theStack.Push(a);
+                        break;
+                    case '.':
+                        _theOutput.Append(_theStack.Pop().ToString());
+                        break;
+                    case ',':
+                        _theOutput.Append(((char)_theStack.Pop()).ToString());
+                        break;
+                    case '#':
+                        _theInstruction.Move(_currentDirection);
+                        break;
+                    case 'p':
+                        var y = _theStack.Pop();
+                        var x = _theStack.Pop();
+                        var v = _theStack.Pop();
+                        _theInstruction.SetCharAtPoint(new Point(x, y), (char)v);
+                        break;
+                    case 'g':
+                        y = _theStack.Pop();
+                        x = _theStack.Pop();
+                        _theStack.Push((char)_theInstruction.GetCharAtPoint(new Point(x, y)));
                         break;
                 }
 
