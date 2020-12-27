@@ -108,9 +108,6 @@ namespace Befunge_Interpreter.Tests
             Assert.That(actual, Is.TypeOf(typeof(string)));
         }
 
-        [TestCase(">x23p23g,   @\n" +
-                  "             \n" +
-                  "   b         ", "x")]
         [TestCase(">523p23g.   @\n" +
                   "             \n" +
                   "   b         ", "5")]

@@ -35,8 +35,6 @@ namespace Befunge_Interpreter
                     _theInstruction.Move(_currentDirection);
                     return _theStack.Peek().ToString();
                 }
-                else if (Char.IsLetter(currentChar) && !new char[] { 'p', 'g', 'v' }.Contains(currentChar))
-                    _theStack.Push(currentChar);
                 else if (Char.IsDigit(currentChar))
                     _theStack.Push(currentChar - 48);
                 else if (movers.Contains(currentChar))
@@ -126,6 +124,8 @@ namespace Befunge_Interpreter
                         y = _theStack.Pop();
                         x = _theStack.Pop();
                         _theStack.Push((char)_theInstruction.GetCharAtPoint(new Point(x, y)));
+                        break;
+                    default:
                         break;
                 }
                 _theInstruction.Move(_currentDirection);
