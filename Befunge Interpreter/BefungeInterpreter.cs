@@ -28,21 +28,23 @@ namespace Befunge_Interpreter
             while (true)
             {
                 char currentChar = _theInstruction.CurrentChar;
-                Debug.WriteLine("Char: " + currentChar);
+
                 if (_stringMode)
-                    _theStack.Push(_theInstruction.CurrentChar);
+                {
+                    _theStack.Push(currentChar);
+                    _theInstruction.Move(_currentDirection);
+                    return _theStack.Peek().ToString();
+                }
                 else if (Char.IsLetter(currentChar) && !new char[] { 'p', 'g', 'v' }.Contains(currentChar))
-                    _theStack.Push(_theInstruction.CurrentChar);
-                if (Char.IsDigit(_theInstruction.CurrentChar))
-                    _theStack.Push(_theInstruction.CurrentChar - 48);
-                else if (movers.Contains(_theInstruction.CurrentChar))
-                    SetDirection(_theInstruction.CurrentChar);
-                else if (_stringMode)
-                    _theStack.Push(_theInstruction.CurrentChar);
-                if (_theInstruction.CurrentChar == '@')
+                    _theStack.Push(currentChar);
+                else if (Char.IsDigit(currentChar))
+                    _theStack.Push(currentChar - 48);
+                else if (movers.Contains(currentChar))
+                    SetDirection(currentChar);
+                else if (currentChar == '@')
                     break;
 
-                switch (_theInstruction.CurrentChar)
+                switch (currentChar)
                 {
                     case '+':
                     case '-':
@@ -56,7 +58,6 @@ namespace Befunge_Interpreter
                         _theStack.Push(eval);
                         break;
                     case '`':
-                        dt = new DataTable();
                         a = _theStack.Pop();
                         b = _theStack.Pop();
                         _theStack.Push(b > a ? 1 : 0);
@@ -127,14 +128,7 @@ namespace Befunge_Interpreter
                         _theStack.Push((char)_theInstruction.GetCharAtPoint(new Point(x, y)));
                         break;
                 }
-
-                if (!_stringMode)
-                    _theInstruction.Move(_currentDirection);
-                else
-                {
-                    _theInstruction.Move(_currentDirection);
-                    return _theStack.Pop().ToString();
-                }
+                _theInstruction.Move(_currentDirection);
             }
             return _theOutput.ToString();
         }
