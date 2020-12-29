@@ -4,27 +4,22 @@
 namespace Befunge_Interpreter
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
-    using System.Data;
     using System.Diagnostics;
-    using System.Linq;
-    using System.Text;
-    using static Befunge_Interpreter.BefungeInterpreter;
 
     public class BefungeInterpreter
     {
         private Direction _currentDirection = Direction.Right;
         private Instruction _theInstruction;
         private Stack<int> _theStack;
-        private StringBuilder _theOutput;
-        private Random _random;
+        private string _theOutput;
         private bool _stringMode;
 
         public string Interpret(string code)
         {
             Initialize(code);
-            char[] movers = new char[] { '<', '>', '^', 'v' };
+            var random = new Random();
+
             while (true)
             {
                 char currentChar = _theInstruction.CurrentChar;
@@ -37,37 +32,43 @@ namespace Befunge_Interpreter
                 }
                 else if (Char.IsDigit(currentChar))
                     _theStack.Push(currentChar - 48);
-                else if (movers.Contains(currentChar))
-                    SetDirection(currentChar);
                 else if (currentChar == '@')
                     break;
 
-                switch (currentChar)
+                switch (currentChar) // What? It's O(1) for a small collection... 23 is a small collection
                 {
                     case '+':
                     case '-':
                     case '*':
                     case '/':
                     case '%':
-                        var dt = new DataTable();
                         var a = _theStack.Pop();
                         var b = _theStack.Pop();
-                        var eval = _theInstruction.CurrentChar == '/' && a == 0 ? 0 : (int)Math.Floor(Convert.ToDouble(dt.Compute($"{b}{_theInstruction.CurrentChar}{a}", "")));
-                        _theStack.Push(eval);
+                        using (var dt = new System.Data.DataTable())
+                        {
+                            var eval = _theInstruction.CurrentChar == '/' && a == 0 ? 0 : (int)Math.Floor(Convert.ToDouble(dt.Compute($"{b}{_theInstruction.CurrentChar}{a}", "")));
+                            _theStack.Push(eval);
+                        }
                         break;
                     case '`':
                         a = _theStack.Pop();
                         b = _theStack.Pop();
                         _theStack.Push(b > a ? 1 : 0);
                         break;
+                    case '<':
+                    case '^':
+                    case '>':
+                    case 'v':
+                        SetDirection(currentChar);
+                        break;
+                    case '?':
+                        var next = random.Next(0, 3);
+                        SetDirection(new char[] { '<', '^', '>', 'v', }[next]);
+                        Console.WriteLine(next);
+                        break;
                     case '!':
                         a = _theStack.Pop();
                         _theStack.Push(a == 0 ? 1 : 0);
-                        break;
-                    case '?':
-                        var next = _random.Next(0, 3);
-                        var randomChar = movers[next];
-                        SetDirection(randomChar);
                         break;
                     case '_':
                         if (_theStack.Pop() == 0)
@@ -106,39 +107,39 @@ namespace Befunge_Interpreter
                         _theStack.Push(a);
                         break;
                     case '.':
-                        _theOutput.Append(_theStack.Pop().ToString());
+                        _theOutput += _theStack.Pop().ToString();
                         break;
                     case ',':
-                        _theOutput.Append(((char)_theStack.Pop()).ToString());
+                        _theOutput += ((char)_theStack.Pop()).ToString();
                         break;
                     case '#':
                         _theInstruction.Move(_currentDirection);
+                        Debug.WriteLine(_theInstruction.CurrentChar + " skipped.");
                         break;
                     case 'p':
                         var y = _theStack.Pop();
                         var x = _theStack.Pop();
                         var v = _theStack.Pop();
-                        _theInstruction.SetCharAtPoint(new Point(x, y), (char)v);
+                        _theInstruction.SetCharAtPoint(new Point(y, x), (char)v);
                         break;
                     case 'g':
                         y = _theStack.Pop();
                         x = _theStack.Pop();
-                        _theStack.Push((char)_theInstruction.GetCharAtPoint(new Point(x, y)));
+                        _theStack.Push((char)_theInstruction.GetCharAtPoint(new Point(y, x)));
                         break;
                     default:
                         break;
                 }
                 _theInstruction.Move(_currentDirection);
             }
-            return _theOutput.ToString();
+            Console.WriteLine($"Output: {_theOutput}");
+            return _theOutput;
         }
 
         private void Initialize(string code)
         {
             _theInstruction = _theInstruction ?? new Instruction(code);
             _theStack = _theStack ?? new Stack<int>();
-            _theOutput = _theOutput ?? new StringBuilder();
-            _random = _random ?? new Random();
         }
 
         private void SetDirection(char @char)
@@ -187,7 +188,7 @@ namespace Befunge_Interpreter
         internal void SetCharAtPoint(Point point, char v)
         {
 
-            var sb = new StringBuilder(_array[point.Row]);
+            var sb = new System.Text.StringBuilder(_array[point.Row]);
             sb.Remove(point.Column, 1);
             sb.Insert(point.Column, v);
             _array[point.Row] = sb.ToString();
@@ -199,25 +200,25 @@ namespace Befunge_Interpreter
         {
             switch (currentDirection)
             {
-                case Direction.Left:
+                case BefungeInterpreter.Direction.Left:
                     if (_currentPoint.Column > 0)
                         _currentPoint.Column--;
                     else
                         throw new Exception("Invalid left move. Review code and recompile.");
                     break;
-                case Direction.Up:
+                case BefungeInterpreter.Direction.Up:
                     if (_currentPoint.Row > 0)
                         _currentPoint.Row--;
                     else
                         throw new Exception("Invalid up move. Review code and recompile.");
                     break;
-                case Direction.Right:
+                case BefungeInterpreter.Direction.Right:
                     if (_currentPoint.Column < _array[_currentPoint.Row].Length)
                         _currentPoint.Column++;
                     else
                         throw new Exception("Invalid right move. Review code and recompile.");
                     break;
-                case Direction.Down:
+                case BefungeInterpreter.Direction.Down:
                     if (_currentPoint.Row < _array.Length)
                         _currentPoint.Row++;
                     else

@@ -104,17 +104,35 @@ namespace Befunge_Interpreter.Tests
                   "    ^<")]
         public void Interpret_ShouldInterpretPipeAndRandom(string input)
         {
-            var actual = new BefungeInterpreter().Interpret(input);
+            var actual = (new BefungeInterpreter()).Interpret(input);
+            Assert.That(actual, Is.TypeOf(typeof(string)));
+             actual = (new BefungeInterpreter()).Interpret(input);
             Assert.That(actual, Is.TypeOf(typeof(string)));
         }
 
-        [TestCase(">523p23g.   @\n" +
+        [TestCase(">532p32g.   @\n" +
                   "             \n" +
                   "   b         ", "5")]
         public void Interpret_ShouldInterpretPutAndGet(string input, string expected)
         {
             var actual = new BefungeInterpreter().Interpret(input);
             Assert.That(actual, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Interpret_ShouldPassSimpleCodewarsTest()
+        {
+            Assert.AreEqual(
+                    "123456789",
+                    new BefungeInterpreter().Interpret(">987v>.v\nv456<  :\n>321 ^ _@"));
+        }
+
+        [Test]
+        public void Interpret_ShouldPassQuineCodewarsTest()
+        {
+            Assert.AreEqual(
+                    "01->1# +# :# 0# g# ,# :# 5# 8# *# 4# +# -# _@",
+                    new BefungeInterpreter().Interpret("01->1# +# :# 0# g# ,# :# 5# 8# *# 4# +# -# _@"));
         }
     }
 }
