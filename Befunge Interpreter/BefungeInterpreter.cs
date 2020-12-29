@@ -5,11 +5,10 @@ namespace Befunge_Interpreter
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
 
     public class BefungeInterpreter
     {
-        private Direction _currentDirection = Direction.Right;
+        private char _currentDirection = '>';
         private Instruction _theInstruction;
         private Stack<int> _theStack;
         private string _theOutput;
@@ -18,7 +17,6 @@ namespace Befunge_Interpreter
         public string Interpret(string code)
         {
             Initialize(code);
-            var random = new Random();
 
             while (true)
             {
@@ -35,7 +33,7 @@ namespace Befunge_Interpreter
                 else if (currentChar == '@')
                     break;
 
-                switch (currentChar) // What? It's O(1) for a small collection... 23 is a small collection
+                switch (currentChar)
                 {
                     case '+':
                     case '-':
@@ -46,7 +44,7 @@ namespace Befunge_Interpreter
                         var b = _theStack.Pop();
                         using (var dt = new System.Data.DataTable())
                         {
-                            var eval = _theInstruction.CurrentChar == '/' && a == 0 ? 0 : (int)Math.Floor(Convert.ToDouble(dt.Compute($"{b}{_theInstruction.CurrentChar}{a}", "")));
+                            var eval = currentChar == '/' && a == 0 ? 0 : (int)Math.Floor(Convert.ToDouble(dt.Compute($"{b}{currentChar}{a}", "")));
                             _theStack.Push(eval);
                         }
                         break;
@@ -59,12 +57,10 @@ namespace Befunge_Interpreter
                     case '^':
                     case '>':
                     case 'v':
-                        SetDirection(currentChar);
+                        _currentDirection = currentChar;
                         break;
                     case '?':
-                        var next = random.Next(0, 3);
-                        SetDirection(new char[] { '<', '^', '>', 'v', }[next]);
-                        Console.WriteLine(next);
+                        _currentDirection = new char[] { '<', '^', '>', 'v', }[new Random().Next(0, 3)];
                         break;
                     case '!':
                         a = _theStack.Pop();
@@ -72,15 +68,15 @@ namespace Befunge_Interpreter
                         break;
                     case '_':
                         if (_theStack.Pop() == 0)
-                            SetDirection('>');
+                            _currentDirection = '>';
                         else
-                            SetDirection('<');
+                            _currentDirection = '<';
                         break;
                     case '|':
                         if (_theStack.Pop() == 0)
-                            SetDirection('v');
+                            _currentDirection = 'v';
                         else
-                            SetDirection('^');
+                            _currentDirection = '^';
                         break;
                     case '"':
                         _stringMode = true;
@@ -114,135 +110,62 @@ namespace Befunge_Interpreter
                         break;
                     case '#':
                         _theInstruction.Move(_currentDirection);
-                        Debug.WriteLine(_theInstruction.CurrentChar + " skipped.");
                         break;
                     case 'p':
                         var y = _theStack.Pop();
                         var x = _theStack.Pop();
                         var v = _theStack.Pop();
-                        _theInstruction.SetCharAtPoint(new Point(y, x), (char)v);
+                        _theInstruction.SetCharAtPoint(y, x, (char)v);
                         break;
                     case 'g':
                         y = _theStack.Pop();
                         x = _theStack.Pop();
-                        _theStack.Push((char)_theInstruction.GetCharAtPoint(new Point(y, x)));
+                        _theStack.Push((char)_theInstruction.GetCharAtPoint(y, x));
                         break;
                     default:
                         break;
                 }
                 _theInstruction.Move(_currentDirection);
             }
-            Console.WriteLine($"Output: {_theOutput}");
             return _theOutput;
         }
-
         private void Initialize(string code)
         {
             _theInstruction = _theInstruction ?? new Instruction(code);
             _theStack = _theStack ?? new Stack<int>();
         }
-
-        private void SetDirection(char @char)
-        {
-            switch (@char)
-            {
-                case '<':
-                    _currentDirection = Direction.Left;
-                    break;
-                case '^':
-                    _currentDirection = Direction.Up;
-                    break;
-                case '>':
-                    _currentDirection = Direction.Right;
-                    break;
-                case 'v':
-                    _currentDirection = Direction.Down;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        public enum Direction
-        {
-            Left,
-            Up,
-            Right,
-            Down,
-        }
     }
 
-    internal class Instruction
+    public class Instruction
     {
         private string[] _array;
-        private Point _currentPoint;
-
+        private int _currentRow;
+        private int _currentColumn;
         public Instruction(string code)
         {
             _array = code.Split('\n');
-            _currentPoint = new Point(0, 0);
+            _currentRow = 0;
+            _currentColumn = 0;
         }
-
-        internal char CurrentChar => _array[_currentPoint.Row][_currentPoint.Column];
-        internal char GetCharAtPoint(Point point) => _array[point.Row][point.Column];
-        internal void SetCharAtPoint(Point point, char v)
+        public char CurrentChar => _array[_currentRow][_currentColumn];
+        public char GetCharAtPoint(int row, int column) => _array[row][column];
+        public void SetCharAtPoint(int row, int column, char value)
         {
-
-            var sb = new System.Text.StringBuilder(_array[point.Row]);
-            sb.Remove(point.Column, 1);
-            sb.Insert(point.Column, v);
-            _array[point.Row] = sb.ToString();
+            var sb = new System.Text.StringBuilder(_array[row]);
+            sb.Remove(column, 1);
+            sb.Insert(column, value);
+            _array[row] = sb.ToString();
         }
-
-        public Point CurrentPoint { get { return _currentPoint; } private set { _currentPoint = value; } }
-
-        internal void Move(BefungeInterpreter.Direction currentDirection)
+        public void Move(char currentDirection)
         {
-            switch (currentDirection)
-            {
-                case BefungeInterpreter.Direction.Left:
-                    if (_currentPoint.Column > 0)
-                        _currentPoint.Column--;
-                    else
-                        throw new Exception("Invalid left move. Review code and recompile.");
-                    break;
-                case BefungeInterpreter.Direction.Up:
-                    if (_currentPoint.Row > 0)
-                        _currentPoint.Row--;
-                    else
-                        throw new Exception("Invalid up move. Review code and recompile.");
-                    break;
-                case BefungeInterpreter.Direction.Right:
-                    if (_currentPoint.Column < _array[_currentPoint.Row].Length)
-                        _currentPoint.Column++;
-                    else
-                        throw new Exception("Invalid right move. Review code and recompile.");
-                    break;
-                case BefungeInterpreter.Direction.Down:
-                    if (_currentPoint.Row < _array.Length)
-                        _currentPoint.Row++;
-                    else
-                        throw new Exception("Invalid down move. Review code and recompile.");
-                    break;
-                default:
-                    break;
-            }
+            if (currentDirection == '<')
+                _currentColumn--;
+            else if (currentDirection == '^')
+                _currentRow--;
+            else if (currentDirection == '>')
+                _currentColumn++;
+            else if (currentDirection == 'v')
+                _currentRow++;
         }
-    }
-
-    internal class Point
-    {
-        private int _row;
-        private int _column;
-
-        public Point(int row, int column)
-        {
-            _row = row;
-            _column = column;
-        }
-
-        public int Row { get { return _row; } set { _row = value; } }
-        public int Column { get { return _column; } set { _column = value; } }
-
     }
 }
